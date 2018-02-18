@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using MyCouch;
 using Npgsql;
 
-namespace PostgresToCouchDB
+namespace Pg2Couch
 {
     public class Program
     {
@@ -21,18 +21,6 @@ namespace PostgresToCouchDB
         private string CouchDbDatabaseName =
             Environment.GetEnvironmentVariable("COUCHDB_DB_NAME") ??
                 throw new TerminateApplicationException("Error: The COUCHDB_DB_NAME env variable must be set");
-
-        private static void HandleGlobalException(Exception exception)
-        {
-            Console.Error.WriteLine(exception.Message);
-
-            if (!(exception is TerminateApplicationException))
-            {
-                Console.Error.WriteLine(exception.StackTrace);
-            }
-
-            Environment.Exit(1);
-        }
 
         public static void Main(string[] args)
         {
@@ -119,6 +107,18 @@ namespace PostgresToCouchDB
                     return reader.GetFirstColumnAs<string>();
                 }
             }
+        }
+
+        private static void HandleGlobalException(Exception exception)
+        {
+            Console.Error.WriteLine(exception.Message);
+
+            if (!(exception is TerminateApplicationException))
+            {
+                Console.Error.WriteLine(exception.StackTrace);
+            }
+
+            Environment.Exit(1);
         }
 
         private void LogInfo(string message)

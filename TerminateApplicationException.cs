@@ -1,6 +1,6 @@
 using System;
 
-namespace PostgresToCouchDB
+namespace Pg2Couch
 {
     public class TerminateApplicationException : ApplicationException
     {

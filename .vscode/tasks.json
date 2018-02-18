@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/PostgreSQLToCouchDB.csproj"
+                "${workspaceFolder}/Pg2Couch.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

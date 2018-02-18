@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/PostgreSQLToCouchDB.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/Pg2Couch.dll",
             "args": [],
             "env": {
                 "COUCHDB_URL": "http://localhost:5984/",

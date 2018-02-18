@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Npgsql;
 
-namespace PostgresToCouchDB
+namespace Pg2Couch
 {
     public static class NpgsqlDataReaderExtensionMethods
     {
