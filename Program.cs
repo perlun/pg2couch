@@ -85,7 +85,9 @@ namespace Pg2Couch
         {
             using (var client = new MyCouchClient(CouchDbUrl, databaseName))
             {
-                Parallel.ForEach(rows, new ParallelOptions { MaxDegreeOfParallelism = 10 }, row =>
+                // Various values for the MaxDegreeOfParallelism has been tried; 20 seems to give the best overall
+                // performance, when the Postgres and CouchDB servers are running on the same machine as pg2couch.
+                Parallel.ForEach(rows, new ParallelOptions { MaxDegreeOfParallelism = 20 }, row =>
                 {
                     client.Documents.PostAsync(row).Wait();
                 });
