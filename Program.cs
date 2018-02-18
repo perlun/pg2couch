@@ -4,12 +4,15 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MyCouch;
+using NLog;
 using Npgsql;
 
 namespace Pg2Couch
 {
     public class Program
     {
+        private static Logger Logger = LogManager.GetCurrentClassLogger();
+
         private string PostgresConnectionString =
             Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ??
                 throw new TerminateApplicationException("Error: The POSTGRES_CONNECTION_STRING env variable must be set");
@@ -26,6 +29,7 @@ namespace Pg2Couch
         {
             try
             {
+                LogHelper.ConfigureLogging();
                 new Program().Run();
             }
             catch (Exception e)
@@ -43,7 +47,7 @@ namespace Pg2Couch
                 connection.Open();
 
                 var tables = GetTables(connection);
-                LogInfo("Retrieved table list");
+                Logger.Info($"Retrieved list of {tables.Count()} table(s) to transfer.");
 
                 foreach (var table in tables)
                 {
@@ -72,7 +76,7 @@ namespace Pg2Couch
         private void SynchronizeTableToCouchDB(NpgsqlConnection connection, string table)
         {
             var rows = GetRowsFromTableAsJson(connection, table);
-            LogInfo($"Transferring {rows.Count()} records in table '{table}' from Postgres to CouchDB");
+            Logger.Info($"Transferring {rows.Count()} records in table '{table}' from Postgres to CouchDB.");
 
             InsertIntoCouchDB(CouchDbDatabaseName, rows);
         }
@@ -119,11 +123,6 @@ namespace Pg2Couch
             }
 
             Environment.Exit(1);
-        }
-
-        private void LogInfo(string message)
-        {
-            Console.WriteLine($"INFO: {message}");
         }
     }
 }
