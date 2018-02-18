@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/perlun/pg2couch.svg?branch=master)](https://travis-ci.org/perlun/pg2couch)
+
 # pg2couch
 
 `pg2couch` is a little utility for one-way data synchronization from Postgres to CouchDB.
