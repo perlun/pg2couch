@@ -12,7 +12,7 @@ namespace Pg2Couch
             var config = new LoggingConfiguration();
 
             var consoleTarget = new ColoredConsoleTarget("console");
-            consoleTarget.Layout = @"${level:uppercase=true} ${date:format=HH\:mm\:ss} ${logger}: ${message}";
+            consoleTarget.Layout = @"${level:uppercase=true} ${date:format=HH\:mm\:ss.FFF} ${logger}: ${message}";
             config.AddTarget(consoleTarget);
 
             var loggingRule = new LoggingRule("*", LogLevel.Debug, consoleTarget);
