@@ -94,7 +94,7 @@ namespace Pg2Couch
             }
         }
 
-        private IEnumerable<string> GetRowsFromTableAsJson(NpgsqlConnection connection, string tableName)
+        private IEnumerable<(string, string)> GetRowsFromTableAsJson(NpgsqlConnection connection, string tableName)
         {
             // ROW_TO_JSON() requires Postgres 9.2 or greater:
             // https://www.postgresql.org/docs/current/static/functions-json.html
@@ -102,15 +102,18 @@ namespace Pg2Couch
             // Note: directly inserting strings in SQL is clearly an antipattern. However,
             // command.Parameters.AddWithValue() does not work in this case because of limitations in PostgreSQL.
             // More information: https://stackoverflow.com/questions/37752836/postgresql-npgsql-returning-42601-syntax-error-at-or-near-1
+            //
+            // Note: the query below makes the strict assumption that each table has an 'id' field which will be used as the
+            // CouchDB document ID. Future improvements could be to support other data models as well.
             var queryString = $@"
-                SELECT ROW_TO_JSON({tableName})
+                SELECT id, ROW_TO_JSON({tableName})
                 FROM {tableName}
             ";
             using (var command = new NpgsqlCommand(queryString, connection))
             {
                 using (var reader = command.ExecuteReader())
                 {
-                    return reader.GetFirstColumnAs<string>();
+                    return reader.MapResult(reader => ((string)reader[0], (string)reader[1]));
                 }
             }
         }
