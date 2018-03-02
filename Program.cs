@@ -13,10 +13,6 @@ namespace Pg2Couch
     {
         private static Logger Logger = LogManager.GetCurrentClassLogger();
 
-        private string PostgresConnectionString =
-            Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ??
-                throw new TerminateApplicationException("Error: The POSTGRES_CONNECTION_STRING env variable must be set");
-
         private string CouchDbUrl =
             Environment.GetEnvironmentVariable("COUCHDB_URL") ??
                 throw new TerminateApplicationException("Error: The COUCHDB_URL env variable must be set");
@@ -40,43 +36,12 @@ namespace Pg2Couch
 
         private void Run()
         {
-            using (var connection = new NpgsqlConnection(PostgresConnectionString))
+            var json = "{ \"foo\": \"bar\" }";
+            var rows = new List<string>();
+            for (int i = 0; i < 20000; i++)
             {
-                // We need to start off by performing an initial sync, since the data in our CouchDB database is not
-                // necessarily in sync with the data in the Postgres database.
-                connection.Open();
-
-                var tables = GetTables(connection);
-                Logger.Info($"Retrieved list of {tables.Count()} table(s) to transfer.");
-
-                foreach (var table in tables)
-                {
-                    SynchronizeTableToCouchDB(connection, table);
-                }
+                rows.Add(json);
             }
-        }
-
-        private IEnumerable<string> GetTables(NpgsqlConnection conn)
-        {
-            var queryString = @"
-                SELECT table_name
-                  FROM information_schema.tables
-                 WHERE table_schema='public'
-                   AND table_type='BASE TABLE';
-            ";
-            using (var command = new NpgsqlCommand(queryString, conn))
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    return reader.GetFirstColumnAs<string>();
-                }
-            }
-        }
-
-        private void SynchronizeTableToCouchDB(NpgsqlConnection connection, string table)
-        {
-            var rows = GetRowsFromTableAsJson(connection, table);
-            Logger.Info($"Transferring {rows.Count()} records in table '{table}' from Postgres to CouchDB.");
 
             InsertIntoCouchDB(CouchDbDatabaseName, rows);
         }
@@ -85,33 +50,15 @@ namespace Pg2Couch
         {
             using (var client = new MyCouchClient(CouchDbUrl, databaseName))
             {
-                // Various values for the MaxDegreeOfParallelism has been tried; 20 seems to give the best overall
-                // performance, when the Postgres and CouchDB servers are running on the same machine as pg2couch.
-                Parallel.ForEach(rows, new ParallelOptions { MaxDegreeOfParallelism = 20 }, row =>
+                // DON'T DO THIS AT HOME. This creates a huge number of threads, which is likely to crash
+                // your program if the number of rows is high.
+                var tasks = new List<Task>();
+                foreach (var row in rows)
                 {
-                    client.Documents.PostAsync(row).Wait();
-                });
-            }
-        }
-
-        private IEnumerable<string> GetRowsFromTableAsJson(NpgsqlConnection connection, string tableName)
-        {
-            // ROW_TO_JSON() requires Postgres 9.2 or greater:
-            // https://www.postgresql.org/docs/current/static/functions-json.html
-            //
-            // Note: directly inserting strings in SQL is clearly an antipattern. However,
-            // command.Parameters.AddWithValue() does not work in this case because of limitations in PostgreSQL.
-            // More information: https://stackoverflow.com/questions/37752836/postgresql-npgsql-returning-42601-syntax-error-at-or-near-1
-            var queryString = $@"
-                SELECT ROW_TO_JSON({tableName})
-                FROM {tableName}
-            ";
-            using (var command = new NpgsqlCommand(queryString, connection))
-            {
-                using (var reader = command.ExecuteReader())
-                {
-                    return reader.GetFirstColumnAs<string>();
+                    tasks.Add(client.Documents.PostAsync(row));
                 }
+
+                Task.WaitAll(tasks.ToArray());
             }
         }
 

@@ -1,16 +1,23 @@
-[![Build Status](https://travis-ci.org/perlun/pg2couch.svg?branch=master)](https://travis-ci.org/perlun/pg2couch)
+# README.md
 
-# pg2couch
+This branch is an attempt to reproduce the https://github.com/dotnet/coreclr/issues/16438 issue in a reproducible manner.
 
-`pg2couch` is a little utility for one-way data synchronization from Postgres to CouchDB.
+The problem has thus far only been reproduced on macOS.
 
-At the moment, it only supports doing a "full synchronization" on startup, but the idea is to also support streaming of changes via Posgres' built-in `NOTIFY`/`LISTEN` functionality. This should allow you to have a live, read-only replica of your Postgres data.
+To start the prerequisities (CouchDB):
 
-**TODO**: Only records which are actually changed compared to their CouchDB representation will be updated in CouchDB, to avoid creating superfluous document revisions.
+```shell
+$ docker-compose up -d
+```
 
-**TODO**: The format of the data in CouchDB will be optimized to suit [`ember-pouch`](https://github.com/pouchdb-community/ember-pouch) since this is our primary consumer of the CouchDB data.
+Create the database:
 
-## TODO/unresolved issues
+```shell
+$ curl -X PUT http://localhost:5984/pg2couch
+```
 
-- Implement the TODO points noted above
-- Think about how to support data being changed in CouchDB, replicated back to Postgres (using some 3rd party tool). How will we avoid data "looping"? Will the change detection be enough to support these scenarios?
+You can now run the program that reproduces the bug:
+
+```shell
+$ ./debug.sh
+```

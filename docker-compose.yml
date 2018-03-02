@@ -1,16 +1,5 @@
 version: '3'
 services:
-  postgres:
-    image: postgres:9.6-alpine
-    environment:
-      - POSTGRES_USER=pg2couch
-      - POSTGRES_PASSWORD=pg2couch
-      - PGDATA=/data/postgresql
-    ports:
-      - 5432:5432
-    volumes:
-      - ./data/postgresql:/data/postgresql
-
   couchdb:
     image: couchdb:2.1
     ports:
