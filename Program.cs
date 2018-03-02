@@ -76,9 +76,20 @@ namespace Pg2Couch
         private void SynchronizeTableToCouchDB(NpgsqlConnection connection, string table)
         {
             var rows = GetRowsFromTableAsJson(connection, table);
-            Logger.Info($"Transferring {rows.Count()} records in table '{table}' from Postgres to CouchDB.");
+            var timeTaken = Benchmark(() => InsertIntoCouchDB(CouchDbDatabaseName, rows));
+            var rowsPerSecond = Math.Round(rows.Count() / timeTaken, 1);
 
-            InsertIntoCouchDB(CouchDbDatabaseName, rows);
+            Logger.Info($"Transferred {rows.Count()} records in table '{table}' from Postgres to CouchDB. ({rowsPerSecond} rows/s)");
+        }
+
+        private double Benchmark(Action callback)
+        {
+            var startTime = DateTime.Now;
+            callback();
+            var endTime = DateTime.Now;
+            var timeTaken = endTime - startTime;
+
+            return timeTaken.TotalSeconds;
         }
 
         private void InsertIntoCouchDB(string databaseName, IEnumerable<string> rows)
