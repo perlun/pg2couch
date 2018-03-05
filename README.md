@@ -6,11 +6,20 @@
 
 At the moment, it only supports doing a "full synchronization" on startup, but the idea is to also support streaming of changes via Posgres' built-in `NOTIFY`/`LISTEN` functionality. This should allow you to have a live, read-only replica of your Postgres data.
 
-**TODO**: Only records which are actually changed compared to their CouchDB representation will be updated in CouchDB, to avoid creating superfluous document revisions.
+For now, it's just a proof of concept and **not production ready in any way**. See the list of [issues](https://github.com/perlun/pg2couch/issues) to get a view of what we are aiming for in the somewhat-near future
 
-**TODO**: The format of the data in CouchDB will be optimized to suit [`ember-pouch`](https://github.com/pouchdb-community/ember-pouch) since this is our primary consumer of the CouchDB data.
+## Supported features
 
-## TODO/unresolved issues
+- Initial synchronization of data.
+- **TODO**: Only transfer modified records (https://github.com/perlun/pg2couch/issues/3)
+- **TODO**: Implement transformation of data (https://github.com/perlun/pg2couch/issues/2)
+- **TODO**: Be usable as a library (possibly a NuGet package)
+- **TODO**: Support the `NOTIFY`/`LISTEN` commands in PostgreSQL.
 
-- Implement the TODO points noted above
-- Think about how to support data being changed in CouchDB, replicated back to Postgres (using some 3rd party tool). How will we avoid data "looping"? Will the change detection be enough to support these scenarios?
+## Not in scope
+
+- Supporting other source databases (MySQL, MSSQL, other ADO.NET.) This is clearly doable, but we have chosen the simple path here of only supporting what we need, i.e. PostgreSQL, which is the simplest way to get started in our use case. Feel free to fork the project and add support for other databases if you like.
+
+## License
+
+MIT
