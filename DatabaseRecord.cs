@@ -44,6 +44,19 @@ namespace Pg2Couch
             }
         }
 
+        public object RemoveAndReturn(string key)
+        {
+            var result = this[key];
+            Remove(key);
+            return result;
+        }
+
+        public DatabaseRecord Transform(Action<DatabaseRecord> transformer)
+        {
+            transformer(this);
+            return this;
+        }
+
         internal static DatabaseRecord FromReader(DbDataReader reader, List<string> columnNames)
         {
             var databaseRecord = new DatabaseRecord();
