@@ -43,23 +43,6 @@ namespace Pg2Couch
             tables[tableName] = rowTransformer;
         }
 
-        //private IEnumerable<string> GetTables()
-        //{
-        //    var queryString = @"
-        //        SELECT table_name
-        //          FROM information_schema.tables
-        //         WHERE table_schema='public'
-        //           AND table_type='BASE TABLE';
-        //    ";
-        //    using (var command = new NpgsqlCommand(queryString, connection))
-        //    {
-        //        using (var reader = command.ExecuteReader())
-        //        {
-        //            return reader.GetFirstColumnAs<string>();
-        //        }
-        //    }
-        //}
-
         public void PerformInitialSync()
         {
             // We need to start off by performing an initial sync, since the data in our CouchDB database is not
