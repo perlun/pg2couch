@@ -116,7 +116,7 @@ namespace Pg2Couch
                         transformedChunk = chunk.Select(row => rowTransformer(row));
                     }
 
-                    var documents = transformedChunk.Select(row => JsonConvert.SerializeObject(row)).ToArray();
+                    var documents = transformedChunk.Select(JsonConvert.SerializeObject).ToArray();
 
                     var request = new BulkRequest();
                     request.Include(documents);
