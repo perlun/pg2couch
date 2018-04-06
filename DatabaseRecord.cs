@@ -51,7 +51,10 @@ namespace Pg2Couch
             return result;
         }
 
-        public DatabaseRecord Transform(Action<DatabaseRecord> transformer)
+        public DatabaseRecord Transform(Func<DatabaseRecord, DatabaseRecord> transformer) =>
+            transformer(this);
+
+        public DatabaseRecord Mutate(Action<DatabaseRecord> transformer)
         {
             transformer(this);
             return this;
