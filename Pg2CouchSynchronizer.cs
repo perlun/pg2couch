@@ -11,7 +11,7 @@ using Npgsql;
 
 namespace Pg2Couch
 {
-    public delegate DatabaseRecord RowTransformer(DatabaseRecord row);
+    public delegate DatabaseRecord RowTransformer(string tableName, DatabaseRecord row);
 
     public class Pg2CouchSynchronizer : IDisposable
     {
@@ -61,7 +61,7 @@ namespace Pg2Couch
         {
             var rows = GetRowsFromTable(table.Key).ToList();
             Logger.Info($"{table.Key}: Transferring {rows.Count()} records in table.");
-            var timeTaken = Benchmark(() => InsertIntoCouchDB(CouchDbDatabaseName, rows, table.Value));
+            var timeTaken = Benchmark(() => InsertIntoCouchDB(CouchDbDatabaseName, table.Key, rows, table.Value));
             var rowsPerSecond = Math.Round(rows.Count() / timeTaken, 1);
 
             Logger.Info($"{table.Key}: Transferred. ({rowsPerSecond} rows/s)");
@@ -96,7 +96,7 @@ namespace Pg2Couch
             }
         }
 
-        private void InsertIntoCouchDB(string databaseName, List<DatabaseRecord> rows, RowTransformer rowTransformer)
+        private void InsertIntoCouchDB(string databaseName, string tableName, List<DatabaseRecord> rows, RowTransformer rowTransformer)
         {
             const int chunkSize = 1000;
 
@@ -113,7 +113,7 @@ namespace Pg2Couch
                     }
                     else
                     {
-                        transformedChunk = chunk.Select(row => rowTransformer(row));
+                        transformedChunk = chunk.Select(row => rowTransformer(tableName, row));
                     }
 
                     var documents = transformedChunk.Select(JsonConvert.SerializeObject).ToArray();
