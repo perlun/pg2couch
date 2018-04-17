@@ -18,7 +18,7 @@ namespace Pg2Couch
 
         private static Logger Logger = LogManager.GetCurrentClassLogger();
         private DbConnection connection;
-        private Dictionary<string, RowTransformer> tables = new Dictionary<string, RowTransformer>();
+        private Dictionary<string, Table> tables = new Dictionary<string, Table>();
 
         private string CouchDbUrl =
             Environment.GetEnvironmentVariable("COUCHDB_URL") ??
@@ -38,9 +38,13 @@ namespace Pg2Couch
             LogHelper.ConfigureLogging();
         }
 
-        public void AddTable(string tableName, RowTransformer rowTransformer = null)
+        public void AddTable(string tableName, RowTransformer rowTransformer = null, string customQuery = null)
         {
-            tables[tableName] = rowTransformer;
+            tables[tableName] = new Table
+            {
+                Query = customQuery,
+                RowTransformer = rowTransformer
+            };
         }
 
         public void PerformInitialSync()
@@ -57,27 +61,34 @@ namespace Pg2Couch
             }
         }
 
-        private void SynchronizeTableToCouchDB(KeyValuePair<string, RowTransformer> table)
+        private void SynchronizeTableToCouchDB(KeyValuePair<string, Table> table)
         {
-            var rows = GetRowsFromTable(table.Key).ToList();
+            var rows = GetRowsFromTable(table.Key, table.Value.Query).ToList();
             Logger.Info($"{table.Key}: Transferring {rows.Count()} records in table.");
-            var timeTaken = Benchmark(() => InsertIntoCouchDB(CouchDbDatabaseName, table.Key, rows, table.Value));
+            var timeTaken = Benchmark(() => InsertIntoCouchDB(CouchDbDatabaseName, table.Key, rows, table.Value.RowTransformer));
             var rowsPerSecond = Math.Round(rows.Count() / timeTaken, 1);
 
             Logger.Info($"{table.Key}: Transferred. ({rowsPerSecond} rows/s)");
         }
 
-        private IEnumerable<DatabaseRecord> GetRowsFromTable(string tableName)
+        private IEnumerable<DatabaseRecord> GetRowsFromTable(string tableName, string query)
         {
             using (var command = connection.CreateCommand())
             {
-                // Note: directly inserting strings in SQL is clearly an antipattern. However,
-                // command.Parameters.AddWithValue() does not work in this case because of limitations in PostgreSQL.
-                // More information: https://stackoverflow.com/questions/37752836/postgresql-npgsql-returning-42601-syntax-error-at-or-near-1
-                command.CommandText = $@"
-                    SELECT *
-                    FROM {tableName}
-                ";
+                if (query == null)
+                {
+                    // Note: directly inserting strings in SQL is clearly an antipattern. However,
+                    // command.Parameters.AddWithValue() does not work in this case because of limitations in PostgreSQL.
+                    // More information: https://stackoverflow.com/questions/37752836/postgresql-npgsql-returning-42601-syntax-error-at-or-near-1
+                    command.CommandText = $@"
+                        SELECT *
+                        FROM {tableName}
+                    ";
+                }
+                else
+                {
+                    command.CommandText = query;
+                }
 
                 using (var reader = command.ExecuteReader())
                 {
